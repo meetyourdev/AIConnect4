@@ -1,56 +1,37 @@
 import numpy as np
 import random
 import pygame
-import sys
 import math
-import time
+import asyncio
 
-##GESTURES IMPORT
+## GESTURES IMPORT
 import cv2
 import numpy as np
 import mediapipe as mp
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 
-
 BLUE = (0, 0, 255)
-BLACK = (255, 255, 255)
+WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
-
 ROW_COUNT = 6
 COLUMN_COUNT = 7
-
 PLAYER = 0
 AI = 1
-
 EMPTY = 0
 PLAYER_PIECE = 1
 AI_PIECE = 2
-
 WINDOW_LENGTH = 4
-
-# game_over = False
-
 pygame.init()
-
 SQUARESIZE = 100
-
 width = COLUMN_COUNT * SQUARESIZE
 height = (ROW_COUNT + 1) * SQUARESIZE
-
 size = (width, height)
-
 RADIUS = int(SQUARESIZE / 2 - 5)
-
 screen = pygame.display.set_mode(size)
-# draw_board(board)
 pygame.display.update()
-
 myfont = pygame.font.SysFont("monospace", 75)
-
-# turn = random.randint(PLAYER, AI)
-
 
 def create_board():
     board = np.zeros((ROW_COUNT, COLUMN_COUNT))
@@ -238,7 +219,7 @@ def draw_board(board):
     for c in range(COLUMN_COUNT):
         for r in range(ROW_COUNT):
             pygame.draw.rect(screen, BLUE, (c * SQUARESIZE, r * SQUARESIZE + SQUARESIZE, SQUARESIZE, SQUARESIZE))
-            pygame.draw.circle(screen, BLACK, (
+            pygame.draw.circle(screen, WHITE, (
             int(c * SQUARESIZE + SQUARESIZE / 2), int(r * SQUARESIZE + SQUARESIZE + SQUARESIZE / 2)), RADIUS)
 
     for c in range(COLUMN_COUNT):
@@ -251,32 +232,14 @@ def draw_board(board):
                 int(c * SQUARESIZE + SQUARESIZE / 2), height - int(r * SQUARESIZE + SQUARESIZE / 2)), RADIUS)
     pygame.display.update()
 
-def main_game():
+async def main_game():
 
-    print("TEST =========================================================")
     board = create_board()
     print_board(board)
     game_over = False
 
-    # pygame.init()
-
-    # SQUARESIZE = 100
-
-    # width = COLUMN_COUNT * SQUARESIZE
-    # height = (ROW_COUNT + 1) * SQUARESIZE
-
-    # size = (width, height)
-
-    # RADIUS = int(SQUARESIZE / 2 - 5)
-
-    # screen = pygame.display.set_mode(size)
     draw_board(board)
-    # pygame.display.update()
-
-    # myfont = pygame.font.SysFont("monospace", 75)
-
     turn = random.randint(PLAYER, AI)
-
 
   # initialize mediapipe
     mpHands = mp.solutions.hands
@@ -294,15 +257,15 @@ def main_game():
 
     # Initializing Disc
     posx = width / 2
-    pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+    pygame.draw.rect(screen, WHITE, (0, 0, width, SQUARESIZE))
     pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE / 2)), RADIUS)
+
     # Initialize the webcam
     cap = cv2.VideoCapture(0)
 
     while True and not game_over:
         # Read each frame from the webcam
         _, frame = cap.read()
-        
         x, y, c = frame.shape
 
         # Flip the frame vertically
@@ -311,11 +274,7 @@ def main_game():
 
         # Get hand landmark prediction
         result = hands.process(framergb)
-
-        # print(result)
-        
         className = ''
-
         # post process the result
         if result.multi_hand_landmarks:
             landmarks = []
@@ -339,15 +298,13 @@ def main_game():
         if(className != ""):
             print(className)
         
-        
         # show the prediction on the frame
         cv2.putText(frame, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 
                     1, (0,0,255), 2, cv2.LINE_AA)
-       
-        
+    
         #Coin goes right
         if className == "peace":
-            pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+            pygame.draw.rect(screen, WHITE, (0, 0, width, SQUARESIZE))
             if(posx < width-(SQUARESIZE/2)):
                 posx += 10
             if turn == PLAYER:
@@ -355,15 +312,15 @@ def main_game():
         
         #Coin goes left
         if className == "okay":
-            pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+            pygame.draw.rect(screen, WHITE, (0, 0, width, SQUARESIZE))
             if(posx > SQUARESIZE/2):
                 posx -= 10
             if turn == PLAYER:
                 pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE / 2)), RADIUS)
 
-        #Coin Down
+        #Coin Drops
         if className == "thumbs down":
-            pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+            pygame.draw.rect(screen, WHITE, (0, 0, width, SQUARESIZE))
             if turn == PLAYER:
                 col = int(math.floor(posx / SQUARESIZE))
 
@@ -381,60 +338,15 @@ def main_game():
 
                     print_board(board)
                     draw_board(board)
-            time.sleep(1)
-            pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE / 2)), RADIUS)        
-
-
+            await asyncio.sleep(0.5)
+             
         pygame.display.update()
             
-
-        # This is for mouse input
-        # for event in pygame.event.get():
-        #     if event.type == pygame.QUIT:
-        #         sys.exit()
-
-        #     # if event.type == pygame.MOUSEMOTION:
-        #         # pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
-        #         # posx = event.pos[0]
-        #         # print(posx)
-        #         # time.sleep(5)
-        #         # if turn == PLAYER:
-        #         #     pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE / 2)), RADIUS)
-
-        #     pygame.display.update()
-
-        #     if event.type == pygame.MOUSEBUTTONDOWN:
-        #         pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
-        #         # print(event.pos)
-        #         # Ask for Player 1 Input
-        #         if turn == PLAYER:
-        #             posx = event.pos[0]
-        #             col = int(math.floor(posx / SQUARESIZE))
-
-        #             if is_valid_location(board, col):
-        #                 row = get_next_open_row(board, col)
-        #                 drop_piece(board, row, col, PLAYER_PIECE)
-
-        #                 if winning_move(board, PLAYER_PIECE):
-        #                     label = myfont.render("Player 1 wins!!", 1, RED)
-        #                     screen.blit(label, (40, 10))
-        #                     game_over = True
-
-        #                 turn += 1
-        #                 turn = turn % 2
-
-        #                 print_board(board)
-        #                 draw_board(board)
-
-        # # Ask for Player 2 Input
+        #  Ask for Player 2 Input
         if turn == AI and not game_over:
-
-            # col = random.randint(0, COLUMN_COUNT-1)
-            # col = pick_best_move(board, AI_PIECE)
             col, minimax_score = minimax(board, 5, -math.inf, math.inf, True)
 
             if is_valid_location(board, col):
-                # pygame.time.wait(500)
                 row = get_next_open_row(board, col)
                 drop_piece(board, row, col, AI_PIECE)
 
@@ -445,6 +357,9 @@ def main_game():
 
                 print_board(board)
                 draw_board(board)
+                #Showing disc for the user to play
+                await asyncio.sleep(0.5)
+                pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE / 2)), RADIUS)  
 
                 turn += 1
                 turn = turn % 2
@@ -463,4 +378,4 @@ def main_game():
 
     cv2.destroyAllWindows()
 
-main_game()    
+asyncio.run(main_game())
