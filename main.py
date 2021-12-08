@@ -3,6 +3,7 @@ import random
 import pygame
 import sys
 import math
+import time
 
 ##GESTURES IMPORT
 import cv2
@@ -291,13 +292,17 @@ def main_game():
     f.close()
     print(classNames)
 
+    # Initializing Disc
+    posx = width / 2
+    pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+    pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE / 2)), RADIUS)
     # Initialize the webcam
     cap = cv2.VideoCapture(0)
 
     while True and not game_over:
         # Read each frame from the webcam
         _, frame = cap.read()
-
+        
         x, y, c = frame.shape
 
         # Flip the frame vertically
@@ -330,45 +335,96 @@ def main_game():
                 # print(prediction)
                 classID = np.argmax(prediction)
                 className = classNames[classID]
-        print(className)
+
+        if(className != ""):
+            print(className)
+        
+        
         # show the prediction on the frame
         cv2.putText(frame, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 
                     1, (0,0,255), 2, cv2.LINE_AA)
+       
+        
+        #Coin goes right
+        if className == "peace":
+            pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+            if(posx < width-(SQUARESIZE/2)):
+                posx += 10
+            if turn == PLAYER:
+                pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE / 2)), RADIUS)
+        
+        #Coin goes left
+        if className == "okay":
+            pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+            if(posx > SQUARESIZE/2):
+                posx -= 10
+            if turn == PLAYER:
+                pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE / 2)), RADIUS)
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
+        #Coin Down
+        if className == "thumbs down":
+            pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+            if turn == PLAYER:
+                col = int(math.floor(posx / SQUARESIZE))
 
-            if event.type == pygame.MOUSEMOTION:
-                pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
-                posx = event.pos[0]
-                if turn == PLAYER:
-                    pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE / 2)), RADIUS)
+                if is_valid_location(board, col):
+                    row = get_next_open_row(board, col)
+                    drop_piece(board, row, col, PLAYER_PIECE)
 
-            pygame.display.update()
+                    if winning_move(board, PLAYER_PIECE):
+                        label = myfont.render("Player 1 wins!!", 1, RED)
+                        screen.blit(label, (40, 10))
+                        game_over = True
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
-                # print(event.pos)
-                # Ask for Player 1 Input
-                if turn == PLAYER:
-                    posx = event.pos[0]
-                    col = int(math.floor(posx / SQUARESIZE))
+                    turn += 1
+                    turn = turn % 2
 
-                    if is_valid_location(board, col):
-                        row = get_next_open_row(board, col)
-                        drop_piece(board, row, col, PLAYER_PIECE)
+                    print_board(board)
+                    draw_board(board)
+            time.sleep(1)
+            pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE / 2)), RADIUS)        
 
-                        if winning_move(board, PLAYER_PIECE):
-                            label = myfont.render("Player 1 wins!!", 1, RED)
-                            screen.blit(label, (40, 10))
-                            game_over = True
 
-                        turn += 1
-                        turn = turn % 2
+        pygame.display.update()
+            
 
-                        print_board(board)
-                        draw_board(board)
+        # This is for mouse input
+        # for event in pygame.event.get():
+        #     if event.type == pygame.QUIT:
+        #         sys.exit()
+
+        #     # if event.type == pygame.MOUSEMOTION:
+        #         # pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+        #         # posx = event.pos[0]
+        #         # print(posx)
+        #         # time.sleep(5)
+        #         # if turn == PLAYER:
+        #         #     pygame.draw.circle(screen, RED, (posx, int(SQUARESIZE / 2)), RADIUS)
+
+        #     pygame.display.update()
+
+        #     if event.type == pygame.MOUSEBUTTONDOWN:
+        #         pygame.draw.rect(screen, BLACK, (0, 0, width, SQUARESIZE))
+        #         # print(event.pos)
+        #         # Ask for Player 1 Input
+        #         if turn == PLAYER:
+        #             posx = event.pos[0]
+        #             col = int(math.floor(posx / SQUARESIZE))
+
+        #             if is_valid_location(board, col):
+        #                 row = get_next_open_row(board, col)
+        #                 drop_piece(board, row, col, PLAYER_PIECE)
+
+        #                 if winning_move(board, PLAYER_PIECE):
+        #                     label = myfont.render("Player 1 wins!!", 1, RED)
+        #                     screen.blit(label, (40, 10))
+        #                     game_over = True
+
+        #                 turn += 1
+        #                 turn = turn % 2
+
+        #                 print_board(board)
+        #                 draw_board(board)
 
         # # Ask for Player 2 Input
         if turn == AI and not game_over:
@@ -397,7 +453,7 @@ def main_game():
             pygame.time.wait(3000)
 
         # Show the final output
-        # cv2.imshow("Output", frame) 
+        cv2.imshow("Output", frame) 
 
         if cv2.waitKey(1) == ord('q'):
             break
