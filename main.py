@@ -241,7 +241,7 @@ async def main_game():
     draw_board(board)
     turn = random.randint(PLAYER, AI)
 
-  # initialize mediapipe
+    # initialize mediapipe
     mpHands = mp.solutions.hands
     hands = mpHands.Hands(max_num_hands=1, min_detection_confidence=0.7)
     mpDraw = mp.solutions.drawing_utils
@@ -253,7 +253,7 @@ async def main_game():
     f = open('gesture.names', 'r')
     classNames = f.read().split('\n')
     f.close()
-    print(classNames)
+    #print(classNames)
 
     # Initializing Disc
     posx = width / 2
@@ -294,10 +294,7 @@ async def main_game():
                 # print(prediction)
                 classID = np.argmax(prediction)
                 className = classNames[classID]
-
-        if(className != ""):
-            print(className)
-        
+      
         # show the prediction on the frame
         cv2.putText(frame, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 
                     1, (0,0,255), 2, cv2.LINE_AA)
